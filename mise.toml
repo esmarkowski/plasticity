@@ -1,0 +1,26 @@
+# Every tool version this project uses lives here. No `latest` anywhere: two
+# machines that run `mise install` a month apart get the same toolchain, so a
+# difference in behavior between them is never the tooling.
+
+[tools]
+go = "1.27.0"
+golangci-lint = "2.13.1"
+
+[tasks.build]
+description = "Build plst into ./bin"
+run = "go build -ldflags \"-X main.version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)\" -o bin/plst ./cmd/plst"
+
+[tasks.install]
+description = "Build and install plst onto PATH"
+run = """
+dir="${PLST_BINDIR:-$HOME/.local/bin}"
+mkdir -p "$dir"
+go build -ldflags "-X main.version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)" -o "$dir/plst" ./cmd/plst
+echo "installed $dir/plst"
+"""
+
+[tasks.test]
+run = "go test ./..."
+
+[tasks.lint]
+run = "golangci-lint run"
