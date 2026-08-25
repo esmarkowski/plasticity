@@ -1,3 +1,8 @@
+
+<div align="center">
+  <img width="300" height="100" alt="Screenshot 2026-08-25 at 12 55 34 PM" src="https://github.com/user-attachments/assets/867fe227-dda8-4b1d-8680-e0c4d1d3b5bf" />
+</div>
+
 # plasticity
 
 `plst` is a platform for agent tooling. It manages modules, loads them, and runs
