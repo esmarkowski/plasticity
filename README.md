@@ -9,36 +9,127 @@ context debugger — is a module, and a module is an executable named
 
 ## Install
 
+macOS or Linux, on Intel or ARM. You need `curl` or `wget`, and `tar`. You do not
+need Go.
+
+### 1. Run the installer
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/esmarkowski/plasticity/main/install.sh | sh
 ```
 
-That fetches the release binary for your platform, puts it in `~/.local/bin`, and
-installs the `harness` module so there is something to run. No Go toolchain
-needed.
+It works out your platform, downloads the matching release, puts `plst` in
+`~/.local/bin`, and then installs the `harness` module so there is something to
+run. Modules live in `~/.plasticity/modules` — only `plst` itself needs to be on
+your PATH.
+
+If you would rather read it before running it — reasonable — it is one file:
 
 ```sh
-plst harness new mine        # start a harness of your own
-plst harness use mine        # link it into place
-plst install esmarkowski/plasticity-claude-sidecar
-plst sidecar start           # see where the context window went
+curl -fsSL https://raw.githubusercontent.com/esmarkowski/plasticity/main/install.sh -o install.sh
+less install.sh
+sh install.sh
 ```
 
-The installer takes three environment variables, so it can be pointed somewhere
-else without being edited:
+### 2. Put it on your PATH
+
+The installer tells you if `~/.local/bin` is not already there. If it is not, add
+it to your shell's startup file — `~/.zshrc` for zsh, `~/.bashrc` for bash:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Then open a new terminal, or `source` that file.
+
+### 3. Check it worked
+
+```sh
+plst
+```
+
+You should see `plst`'s own commands, and one module:
+
+```
+MODULES
+  harness  interchangeable sets of agent configuration
+```
+
+If `plst: command not found`, step 2 has not taken effect yet.
+
+### 4. Set up a harness
+
+A harness is your agent's configuration — instructions, rules, agents, skills,
+hooks — kept in one directory you can swap.
+
+```sh
+plst harness new mine      # scaffold one in ~/.plasticity/harnesses/mine
+plst harness use mine      # link it into ~/.claude
+plst harness list          # what is installed, and what is applied
+```
+
+Anything already in `~/.claude` is **moved aside, not deleted**, and
+`plst harness off` puts it back exactly as it was.
+
+Be aware that `new` scaffolds a placeholder `CLAUDE.md`, so applying a fresh
+harness does replace the instructions you had — your originals are safe in
+`~/.plasticity/harnesses/.parked/`, and `off` restores them, but the agent reads
+the placeholder until you fill it in. If you want to keep what you already have,
+copy it in first:
+
+```sh
+plst harness new mine
+cp -R ~/.claude/CLAUDE.md ~/.claude/agents ~/.plasticity/harnesses/mine/
+plst harness use mine
+```
+
+### 5. Add other modules
+
+```sh
+plst install esmarkowski/plasticity-claude-sidecar
+plst sidecar start         # see where the context window went
+```
+
+`plst install` takes any `owner/repo` that builds a `plst-*` binary. It downloads
+a release when the repo has one and clones and builds when it does not — the
+second path needs a Go toolchain.
+
+### Options
+
+The installer reads three environment variables, so it can be pointed elsewhere
+without being edited:
 
 | | |
 |---|---|
 | `PLST_BINDIR` | where the binaries go. Default `~/.local/bin` |
-| `PLST_MODULES` | modules to install, space separated. Default is `harness` |
+| `PLST_MODULES` | modules to install, space separated. Default `esmarkowski/plasticity-modules` |
 | `PLST_REPO` | where to fetch `plst` from |
 
-From source, if you would rather:
+```sh
+curl -fsSL .../install.sh | PLST_BINDIR=/usr/local/bin sh
+```
+
+### From source
+
+If you have Go and would rather build it:
 
 ```sh
 go install github.com/esmarkowski/plasticity/cmd/plst@latest
 plst install esmarkowski/plasticity-modules
 ```
+
+### Uninstalling
+
+```sh
+plst harness off        # restores whatever the harness displaced
+rm ~/.local/bin/plst
+rm -rf ~/.plasticity    # harnesses, modules, config, cache
+```
+
+Run `plst harness off` first. Without it, `~/.claude` is left holding symlinks
+into a directory that is about to stop existing, and the files the harness moved
+aside stay in `~/.plasticity/harnesses/.parked/` — which the last line then
+deletes.
 
 ## Why a binary and not a plugin
 
