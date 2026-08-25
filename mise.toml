@@ -5,6 +5,7 @@
 [tools]
 go = "1.27.0"
 golangci-lint = "2.13.1"
+goreleaser = "2.5.1"
 
 [tasks.build]
 description = "Build plst into ./bin"
