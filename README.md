@@ -7,9 +7,37 @@ Everything you would actually want — hooks, harness, config, agents, skills, t
 context debugger — is a module, and a module is an executable named
 `plst-<name>`.
 
+## Install
+
 ```sh
+curl -fsSL https://raw.githubusercontent.com/esmarkowski/plasticity/main/install.sh | sh
+```
+
+That fetches the release binary for your platform, puts it in `~/.local/bin`, and
+installs the `harness` module so there is something to run. No Go toolchain
+needed.
+
+```sh
+plst harness new mine        # start a harness of your own
+plst harness use mine        # link it into place
 plst install esmarkowski/plasticity-claude-sidecar
-plst sidecar start
+plst sidecar start           # see where the context window went
+```
+
+The installer takes three environment variables, so it can be pointed somewhere
+else without being edited:
+
+| | |
+|---|---|
+| `PLST_BINDIR` | where the binaries go. Default `~/.local/bin` |
+| `PLST_MODULES` | modules to install, space separated. Default is `harness` |
+| `PLST_REPO` | where to fetch `plst` from |
+
+From source, if you would rather:
+
+```sh
+go install github.com/esmarkowski/plasticity/cmd/plst@latest
+plst install esmarkowski/plasticity-modules
 ```
 
 ## Why a binary and not a plugin
@@ -118,6 +146,25 @@ will disagree with the first the moment either changes.
 
 ## Modules
 
-| module | repo |
-|---|---|
-| `sidecar` | [plasticity-claude-sidecar](https://github.com/esmarkowski/plasticity-claude-sidecar) |
+| module | repo | ships with plst |
+|---|---|---|
+| `harness` | [plasticity-modules](https://github.com/esmarkowski/plasticity-modules) | yes, via the installer |
+| `sidecar` | [plasticity-claude-sidecar](https://github.com/esmarkowski/plasticity-claude-sidecar) | no |
+
+A harness itself does not ship with anything, and should not: the instructions,
+rules, agents and hooks in it are yours, and swapping them is the point.
+
+## Releasing
+
+Each repo releases its own binaries. Tag it and push the tag, and GoReleaser
+builds darwin and linux for amd64 and arm64 and publishes the archives.
+
+`plst install` looks for a release asset for the running platform before it
+considers building from source, so a module with a release installs as a download
+and a module without one still installs.
+
+The host's release deliberately does not build the modules. Doing so would make
+this repo's release depend on another repo's main branch, where a broken commit
+would break the ability to install `plst` at all. `install.sh` installs the
+default modules as a second step instead — the same one command for anyone using
+it, and no coupling here.

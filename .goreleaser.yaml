@@ -1,0 +1,42 @@
+# Release binaries for every platform plst is expected to run on, so installing
+# it never requires a Go toolchain. `plst install` prefers a release asset for
+# exactly this reason: a module should be a download, not a build.
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: plst
+    main: ./cmd/plst
+    binary: plst
+    env: [CGO_ENABLED=0]
+    goos: [darwin, linux]
+    goarch: [amd64, arm64]
+    # The version plst reports comes from the tag, so `plst version` and the
+    # release it came from can never disagree.
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  # Named os_arch, which is one of the spellings plst's own asset matcher looks
+  # for. It accepts the others too — release naming is a matter of taste and
+  # every build tool has its own — but agreeing with itself is the least
+  # surprising default.
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files: [README.md, LICENSE*]
+
+checksums:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  filters:
+    # The release notes are for people reading them, and a version bump is not
+    # news.
+    exclude: ["^docs:", "^test:", "^chore:"]
+
+release:
+  prerelease: auto
